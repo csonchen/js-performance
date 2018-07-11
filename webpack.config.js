@@ -1,17 +1,22 @@
-let path = require('path');
-let HtmlWebpackPlugin = require('html-webpack-plugin');
-let MiniCssExtractPlugin = require('mini-css-extract-plugin');
-let webpack = require('webpack');
+var path = require('path');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
+var webpack = require('webpack');
 
 var basePath = __dirname;
 
 module.exports = {
  context: path.join(basePath, 'src'),
  resolve: {
-   extensions: ['.js', '.ts']
+   extensions: ['.js', '.ts', '.tsx']
  },
  entry: {
-   app: './index.ts',
+   app: './index.tsx',
+   appStyles: './css/site.css',
+   vendor: [
+     'react',
+     'react-dom',
+     'react-router',
+   ],
    vendorStyles: [
      '../node_modules/bootstrap/dist/css/bootstrap.css',
    ],
@@ -23,7 +28,7 @@ module.exports = {
  module: {
    rules: [
      {
-       test: /\.ts$/,
+       test: /\.tsx$/,
        exclude: /node_modules/,
        loader: 'awesome-typescript-loader',
        options: {
@@ -32,21 +37,35 @@ module.exports = {
      },
      {
        test: /\.css$/,
-       use: [MiniCssExtractPlugin.loader, "css-loader"],
+       use: [
+         {loader: 'style-loader'},
+         {loader: 'css-loader'}
+       ]
      },
-     {
-       test: /\.(png|jpg|gif|svg)$/,
-       loader: 'file-loader',
-       options: {
-         name: 'assets/img/[name].[ext]?[hash]'
-       }
-     },
+      // Loading glyphicons => https://github.com/gowravshekar/bootstrap-webpack
+      // Using here url-loader and file-loader
+      {
+        test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
+        loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+      },
+      {
+        test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
+        loader: 'url-loader?limit=10000&mimetype=application/octet-stream'
+      },
+      {
+        test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
+        loader: 'file-loader'
+      },
+      {
+        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+        loader: 'url-loader?limit=10000&mimetype=image/svg+xml'
+      },
    ],
  },
  // For development https://webpack.js.org/configuration/devtool/#for-development
  devtool: 'inline-source-map',
  devServer: {
-   port: 8080,
+   port: 3001,
    noInfo: true,
  },
  plugins: [
@@ -56,9 +75,8 @@ module.exports = {
      template: 'index.html', //Name of template in ./src
      hash: true,
    }),
-   new MiniCssExtractPlugin({
-     filename: "[name].css",
-     chunkFilename: "[id].css"
-   }),
+   new webpack.optimize.CommonsChunkPlugin({
+    names: ['vendor', 'manifest'],
+   })
  ],
 };
